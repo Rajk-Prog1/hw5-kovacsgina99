@@ -1,0 +1,41 @@
+name: Autograding Tests
+'on':
+- push
+- workflow_dispatch
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Test Dragon
+      id: test-dragon
+      uses: education/autograding-command-grader@v1
+      with:
+        test-name: Test Dragon
+        setup-command: sudo -H pip3 install pytest jkg_evaluators
+        command: python -m pytest ./tests/test_dragon.py
+        timeout: 10
+        max-score: 1
+    - name: Test Eggs
+      id: test-eggs
+      uses: education/autograding-command-grader@v1
+      with:
+        test-name: Test Eggs
+        setup-command: sudo -H pip3 install pytest jkg_evaluators
+        command: python -m pytest ./tests/test_eggs.py
+        timeout: 10
+        max-score: 1
+    - name: Autograding Reporter
+      uses: education/autograding-grading-reporter@v1
+      env:
+        TEST-DRAGON_RESULTS: "${{steps.test-dragon.outputs.result}}"
+        TEST-EGGS_RESULTS: "${{steps.test-eggs.outputs.result}}"
+      with:
+        runners: test-dragon,test-eggs
